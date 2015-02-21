@@ -45,5 +45,12 @@
     <string name="signin_other_error">There was an issue with sign in.  Please try again later.</string>
     <string name="hello_world">Hello world!</string>
     <string name="action_newgame">New Game</string>
+    <string name="achievement_first">First Bingo</string>
+    <string name="daily_leaderboard">Daily Leader Board</string>
+    <string name="first_bingo">First Bingo</string>
+    <string name="ten_bingo">10 Bingo</string>
+    <string name="hundred_bingo">Century bingo club</string>
+    <string name="ten_hours_bingo">10 hours playing bingo</string>
+    <string name="hundred_hour_bingo">WOW, just WOW, a hundred hours...</string>
 
 </resources>

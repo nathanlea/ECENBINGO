@@ -32,6 +32,15 @@ import com.google.android.gms.games.Player;
 import com.google.android.gms.plus.Plus;
 import com.google.example.games.basegameutils.BaseGameUtils;
 
+import java.io.FileInputStream;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.ObjectInputStream;
+import java.io.ObjectOutputStream;
+import java.util.Calendar;
+import java.util.Date;
+
 /**
  * Our main activity for the game.
  *
@@ -50,12 +59,21 @@ import com.google.example.games.basegameutils.BaseGameUtils;
 public class MainActivity_GPG extends FragmentActivity
         implements MainMenuFragment.Listener,
         GameplayFragment.Listener, WinFragment.Listener,
-        GoogleApiClient.ConnectionCallbacks, GoogleApiClient.OnConnectionFailedListener {
+        GoogleApiClient.ConnectionCallbacks, GoogleApiClient.OnConnectionFailedListener, BingoFragment.Listener {
+
+    BingoData bingoData;
 
     // Fragments
     MainMenuFragment mMainMenuFragment;
     GameplayFragment mGameplayFragment;
+    BingoFragment mBingoFragment;
     WinFragment mWinFragment;
+
+    FileInputStream fis;
+    ObjectInputStream is;
+    FileOutputStream fos;
+    ObjectOutputStream os;
+    Calendar startTime;
 
     // Client used to interact with Google APIs
     private GoogleApiClient mGoogleApiClient;
@@ -79,7 +97,7 @@ public class MainActivity_GPG extends FragmentActivity
     final String TAG = "TanC";
 
     // playing on hard mode?
-    boolean mHardMode = false;
+    boolean mNewGame = false;
 
     // achievements and scores we're pending to push to the cloud
     // (waiting for the user to sign in, for instance)
@@ -88,7 +106,7 @@ public class MainActivity_GPG extends FragmentActivity
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        setContentView(R.layout.activity_main);
+        setContentView(R.layout.activity_main_gpg);
 
         // Create the Google API Client with access to Plus and Games
         mGoogleApiClient = new GoogleApiClient.Builder(this)
@@ -101,11 +119,13 @@ public class MainActivity_GPG extends FragmentActivity
         // create fragments
         mMainMenuFragment = new MainMenuFragment();
         mGameplayFragment = new GameplayFragment();
+        mBingoFragment = new BingoFragment();
         mWinFragment = new WinFragment();
 
         // listen to fragment events
         mMainMenuFragment.setListener(this);
         mGameplayFragment.setListener(this);
+        mBingoFragment.setListener(this);
         mWinFragment.setListener(this);
 
         // add initial fragment (welcome fragment)
@@ -120,6 +140,13 @@ public class MainActivity_GPG extends FragmentActivity
 
         // load outbox from file
         mOutbox.loadLocal(this);
+
+        readObjectIn(); //Read in the object Data
+
+        startTime = Calendar.getInstance();
+        startTime.set(Calendar.HOUR, 8);
+        startTime.set(Calendar.MINUTE, 30);
+        startTime.set(Calendar.SECOND, 0);
     }
 
     // Switch UI to the given fragment
@@ -149,8 +176,8 @@ public class MainActivity_GPG extends FragmentActivity
     }
 
     @Override
-    public void onStartGameRequested(boolean hardMode) {
-        startGame(hardMode);
+    public void onStartGameRequested(boolean newgame) {
+        startGame(newgame);
     }
 
     @Override
@@ -173,31 +200,58 @@ public class MainActivity_GPG extends FragmentActivity
         }
     }
 
+    public void onBingo() {
+        Calendar calendar = Calendar.getInstance();
+
+        long start = startTime.getTimeInMillis();
+        long end = calendar.getTimeInMillis();
+
+        //TODO CHECK FOR CHEATING...
+        bingoData.increaseBingoCount();
+        bingoData.increaseTimePlayed(end-start);
+        bingoData.addBingo(end);
+
+        switchToFragment(mWinFragment);
+
+        // check for achievements
+        checkForAchievements(bingoData.getTime(), bingoData.getNumBingo());
+
+        // update leaderboards
+        updateLeaderboards( (end-start)/1000,  bingoData.bingoThisWeek(), bingoData.bingoThisMonth(), bingoData.bingoThisSemester() );
+
+        // push those accomplishments to the cloud, if signed in
+        pushAccomplishments();
+        pushLeaderboard();
+
+        switchToFragment(mWinFragment);
+    }
+
     /**
      * Start gameplay. This means updating some status variables and switching
      * to the "gameplay" screen (the screen where the user types the score they want).
      *
-     * @param hardMode whether to start gameplay in "hard mode".
+     * @param newgame whether to start gameplay in "hard mode".
      */
-    void startGame(boolean hardMode) {
-        mHardMode = hardMode;
-        switchToFragment(mGameplayFragment);
+    void startGame(boolean newgame) {
+        mNewGame = newgame;
+        switchToFragment(mBingoFragment);
     }
 
     @Override
     public void onEnteredScore(int requestedScore) {
+        //TODO NHL
         // Compute final score (in easy mode, it's the requested score; in hard mode, it's half)
-        int finalScore = mHardMode ? requestedScore / 2 : requestedScore;
+        int finalScore = mNewGame ? requestedScore / 2 : requestedScore;
 
         mWinFragment.setFinalScore(finalScore);
-        mWinFragment.setExplanation(mHardMode ? getString(R.string.hard_mode_explanation) :
+        mWinFragment.setExplanation(mNewGame ? getString(R.string.hard_mode_explanation) :
                 getString(R.string.easy_mode_explanation));
 
         // check for achievements
         checkForAchievements(requestedScore, finalScore);
 
         // update leaderboards
-        updateLeaderboards(finalScore);
+       // updateLeaderboards(finalScore);
 
         // push those accomplishments to the cloud, if signed in
         pushAccomplishments();
@@ -222,27 +276,38 @@ public class MainActivity_GPG extends FragmentActivity
     /**
      * Check for achievements and unlock the appropriate ones.
      *
-     * @param requestedScore the score the user requested.
-     * @param finalScore the score the user got.
+     * @param numberOfBingo
+     * @param playedTime
      */
-    void checkForAchievements(int requestedScore, int finalScore) {
+    void checkForAchievements(long playedTime, long numberOfBingo) {
         // Check if each condition is met; if so, unlock the corresponding
         // achievement.
-        if (isPrime(finalScore)) {
-            mOutbox.mPrimeAchievement = true;
-            achievementToast(getString(R.string.achievement_prime_toast_text));
+
+        //TODO NHL
+        if (numberOfBingo==1) {
+            mOutbox.mFirstBingoAchievement = true;
+            achievementToast(getString(R.string.first_bingo));
+            unlockAchievement(R.string.achievement_1Bingo, "1st Bingo");
         }
-        if (requestedScore == 9999) {
-            mOutbox.mArrogantAchievement = true;
-            achievementToast(getString(R.string.achievement_arrogant_toast_text));
+        if (numberOfBingo == 10) {
+            mOutbox.m10BingoAchievement = true;
+            achievementToast(getString(R.string.ten_bingo));
+            unlockAchievement(R.string.achievement_10Bingo, "10 Bingos");
         }
-        if (requestedScore == 0) {
-            mOutbox.mHumbleAchievement = true;
-            achievementToast(getString(R.string.achievement_humble_toast_text));
+        if (numberOfBingo == 100) {
+            mOutbox.m100BingoAchievement = true;
+            achievementToast(getString(R.string.hundred_bingo));
+            unlockAchievement(R.string.achievement_100Bingo, "100 Bingos");
         }
-        if (finalScore == 1337) {
-            mOutbox.mLeetAchievement = true;
-            achievementToast(getString(R.string.achievement_leet_toast_text));
+        if (playedTime >= 36000000L ) {
+            mOutbox.m10hoursofBingoAchievement = true;
+            achievementToast(getString(R.string.ten_hours_bingo));
+            unlockAchievement(R.string.achievement_10hrofBingo, "You have spend more than 10 hours on Bingo");
+        }
+        if (playedTime >= 360000000L ) {
+            mOutbox.m100hoursofBingoAchievement = true;
+            achievementToast(getString(R.string.hundred_hour_bingo));
+            unlockAchievement(R.string.achievement_100hourofBingo, "You have spend more than 100 hours on Bingo :)");
         }
         mOutbox.mBoredSteps++;
     }
@@ -271,51 +336,72 @@ public class MainActivity_GPG extends FragmentActivity
             mOutbox.saveLocal(this);
             return;
         }
-        if (mOutbox.mPrimeAchievement) {
-            Games.Achievements.unlock(mGoogleApiClient, getString(R.string.achievement_prime));
-            mOutbox.mPrimeAchievement = false;
+        if (mOutbox.mFirstBingoAchievement) {
+            Games.Achievements.unlock(mGoogleApiClient, getString(R.string.achievement_10Bingo));
+            mOutbox.mFirstBingoAchievement = false;
         }
-        if (mOutbox.mArrogantAchievement) {
-            Games.Achievements.unlock(mGoogleApiClient, getString(R.string.achievement_arrogant));
-            mOutbox.mArrogantAchievement = false;
+        if (mOutbox.m10BingoAchievement) {
+            Games.Achievements.unlock(mGoogleApiClient, getString(R.string.achievement_100Bingo));
+            mOutbox.m10BingoAchievement = false;
         }
-        if (mOutbox.mHumbleAchievement) {
-            Games.Achievements.unlock(mGoogleApiClient, getString(R.string.achievement_humble));
-            mOutbox.mHumbleAchievement = false;
+        if (mOutbox.m100BingoAchievement) {
+            Games.Achievements.unlock(mGoogleApiClient, getString(R.string.achievement_100Bingo));
+            mOutbox.m100BingoAchievement = false;
         }
-        if (mOutbox.mLeetAchievement) {
-            Games.Achievements.unlock(mGoogleApiClient, getString(R.string.achievement_leet));
-            mOutbox.mLeetAchievement = false;
+        if (mOutbox.m10hoursofBingoAchievement) {
+            Games.Achievements.unlock(mGoogleApiClient, getString(R.string.achievement_10hrofBingo));
+            mOutbox.m10hoursofBingoAchievement = false;
         }
-        if (mOutbox.mBoredSteps > 0) {
-            Games.Achievements.increment(mGoogleApiClient, getString(R.string.achievement_really_bored),
-                    mOutbox.mBoredSteps);
-            Games.Achievements.increment(mGoogleApiClient, getString(R.string.achievement_bored),
-                    mOutbox.mBoredSteps);
-        }
-        if (mOutbox.mEasyModeScore >= 0) {
-            Games.Leaderboards.submitScore(mGoogleApiClient, getString(R.string.leaderboard_easy),
-                    mOutbox.mEasyModeScore);
-            mOutbox.mEasyModeScore = -1;
-        }
-        if (mOutbox.mHardModeScore >= 0) {
-            Games.Leaderboards.submitScore(mGoogleApiClient, getString(R.string.leaderboard_hard),
-                    mOutbox.mHardModeScore);
-            mOutbox.mHardModeScore = -1;
+        if (mOutbox.m100hoursofBingoAchievement) {
+            Games.Achievements.unlock(mGoogleApiClient, getString(R.string.achievement_100hourofBingo));
+            mOutbox.m100hoursofBingoAchievement = false;
         }
         mOutbox.saveLocal(this);
+    }
+
+    void pushLeaderboard() {
+        if (!isSignedIn()) {
+            // can't push to the cloud, so save locally
+            mOutbox.saveLocal(this);
+            return;
+        }
+        Games.Leaderboards.submitScore(mGoogleApiClient,
+                getString(R.string.leaderboard_daily), mOutbox.bingoTime);
+        Games.Leaderboards.submitScore(mGoogleApiClient,
+                getString(R.string.leaderboard_weekly), mOutbox.bingoThisWeek);
+        Games.Leaderboards.submitScore(mGoogleApiClient,
+                getString(R.string.leaderboard_monthly), mOutbox.bingoThisMonth);
+        Games.Leaderboards.submitScore(mGoogleApiClient,
+                getString(R.string.leaderboard_semester), mOutbox.bingoThisSemester);
     }
 
     /**
      * Update leaderboards with the user's score.
      *
-     * @param finalScore The score the user got.
+     * The score the user got.
      */
-    void updateLeaderboards(int finalScore) {
-        if (mHardMode && mOutbox.mHardModeScore < finalScore) {
+    /*void updateLeaderboards(int finalScore) {
+        //TODO NHL
+        if (mNewGame && mOutbox.mHardModeScore < finalScore) {
             mOutbox.mHardModeScore = finalScore;
-        } else if (!mHardMode && mOutbox.mEasyModeScore < finalScore) {
+        } else if (!mNewGame && mOutbox.mEasyModeScore < finalScore) {
             mOutbox.mEasyModeScore = finalScore;
+        }
+    }*/
+
+    void updateLeaderboards(long bingoTime, int bingoWeek, int bingoMonth, int bingoSemester) {
+        //TODO NHL
+        if (mOutbox.bingoTime < bingoTime) {
+            mOutbox.bingoTime = bingoTime;
+        }
+        if (mOutbox.bingoThisWeek < bingoWeek) {
+            mOutbox.bingoThisWeek = bingoWeek;
+        }
+        if (mOutbox.bingoThisMonth < bingoMonth) {
+            mOutbox.bingoThisMonth = bingoMonth;
+        }
+        if (mOutbox.bingoThisSemester < bingoSemester) {
+            mOutbox.bingoThisSemester = bingoSemester;
         }
     }
 
@@ -403,7 +489,7 @@ public class MainActivity_GPG extends FragmentActivity
         // NOTE: this check is here only because this is a sample! Don't include this
         // check in your actual production app.
         if(!BaseGameUtils.verifySampleSetup(this, R.string.app_id,
-                R.string.achievement_prime, R.string.leaderboard_easy)) {
+                R.string.achievement_first, R.string.daily_leaderboard)) {
             Log.w(TAG, "*** Warning: setup problems detected. Sign in may not work!");
         }
 
@@ -426,18 +512,21 @@ public class MainActivity_GPG extends FragmentActivity
     }
 
     class AccomplishmentsOutbox {
-        boolean mPrimeAchievement = false;
-        boolean mHumbleAchievement = false;
-        boolean mLeetAchievement = false;
-        boolean mArrogantAchievement = false;
+        boolean mFirstBingoAchievement = false;
+        boolean m10BingoAchievement = false;
+        boolean m100BingoAchievement = false;
+        boolean m10hoursofBingoAchievement = false;
+        boolean m100hoursofBingoAchievement = false;
         int mBoredSteps = 0;
-        int mEasyModeScore = -1;
-        int mHardModeScore = -1;
+        long bingoTime = 99999999999L;
+        int bingoThisWeek = 0;
+        int bingoThisMonth = 0;
+        int bingoThisSemester = 0;
 
         boolean isEmpty() {
-            return !mPrimeAchievement && !mHumbleAchievement && !mLeetAchievement &&
-                    !mArrogantAchievement && mBoredSteps == 0 && mEasyModeScore < 0 &&
-                    mHardModeScore < 0;
+            return !mFirstBingoAchievement && !m10BingoAchievement && !m100BingoAchievement &&
+                    !m10hoursofBingoAchievement && !m100hoursofBingoAchievement && mBoredSteps == 0
+                    && bingoTime < 99999999999L && bingoThisWeek < 0 && bingoThisMonth < 0 && bingoThisSemester < 0;
         }
 
         public void saveLocal(Context ctx) {
@@ -457,5 +546,47 @@ public class MainActivity_GPG extends FragmentActivity
     public void onWinScreenSignInClicked() {
         mSignInClicked = true;
         mGoogleApiClient.connect();
+    }
+
+    public void writeObjectOut( ) {
+        try {
+            fos = getApplicationContext().openFileOutput("bingodata", Context.MODE_PRIVATE);
+            os = new ObjectOutputStream(fos);
+            os.writeObject(this);
+
+        } catch (IOException e) {
+            e.printStackTrace();
+        } catch (Exception e) {
+            e.printStackTrace();
+        } finally {
+            try { os.close();   fos.close(); }
+            catch (Exception e) { e.printStackTrace(); }
+        }
+    }
+
+    public void readObjectIn( ) {
+
+        try {
+            fis = (getApplicationContext()).openFileInput("bingodata");
+            is = new ObjectInputStream(fis);
+            bingoData = (BingoData) is.readObject();
+            is.close();
+            fis.close();
+        } catch (IOException e) {
+            e.printStackTrace();
+            bingoData = new BingoData();  //TODO This is not the best way to handle this but for now it works
+        } catch (Exception e) {
+            bingoData = new BingoData();
+            e.printStackTrace();
+        } finally {
+            try { is.close();   fis.close(); }
+            catch (Exception e) { e.printStackTrace(); }
+        }
+    }
+
+    @Override
+    public void onBackPressed() {
+        writeObjectOut();
+        super.onBackPressed();
     }
 }

@@ -63,6 +63,10 @@ public class ImageAdapter extends BaseAdapter {
         }
     }
 
+    public ImageAdapter() {
+
+    }
+
     public int getCount() {
         return mThumb25.length;
     }
