@@ -15,10 +15,10 @@
    limitations under the License.
 -->
 <resources>
-    <!-- TODO: Replace this by your app's app ID! -->
+    <!-- Replace this by your app's app ID! -->
     <string name="app_id">174414075767</string>
 
-    <!-- TODO: Replace these by your achievement/leaderboard IDs! -->
+    <!-- Replace these by your achievement/leaderboard IDs! -->
     <string name="achievement_1Bingo">CgkI966O34kFEAIQBQ</string>
     <string name="achievement_10Bingo">CgkI966O34kFEAIQBg</string>
     <string name="achievement_100Bingo">CgkI966O34kFEAIQBw</string>

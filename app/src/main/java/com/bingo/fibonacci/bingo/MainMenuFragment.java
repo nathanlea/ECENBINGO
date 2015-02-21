@@ -89,7 +89,6 @@ public class MainMenuFragment extends Fragment implements OnClickListener {
     @Override
     public void onClick(View view) {
         switch (view.getId()) {
-            //TODO NHL
         case R.id.start_game_button:
             mListener.onStartGameRequested(true);
             break;

@@ -4,4 +4,6 @@
     <drawable name="blue_color">#0000ff</drawable>
     <drawable name="green_color">#00ff00</drawable>
     <drawable name="black">#000000</drawable>
+    <drawable name="button_color">#00acc1</drawable>
+    <drawable name="button_text_color">#FFFFFF</drawable>
 </resources>

@@ -2,8 +2,6 @@ package com.bingo.fibonacci.bingo;
 
 import java.io.Serializable;
 import java.util.Calendar;
-import java.util.HashMap;
-import java.util.Map;
 
 /**
  * Created by Nathan on 2/20/2015.

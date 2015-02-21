@@ -32,7 +32,7 @@
             android:layout_marginBottom="10dp"
             android:padding="20dp"
             android:textColor="#ffffff"
-            android:background="#d54937" />
+            android:background="#FF6600" />
 
     <LinearLayout android:orientation="vertical"
         android:layout_width="match_parent"
@@ -60,26 +60,52 @@
             <Button android:id="@+id/start_game_button"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="Start New Game" />
+                android:text="Start New Game"
+                android:background="@drawable/button_color"
+                android:textColor="@drawable/button_text_color"
+                android:textSize="15sp"
+                android:padding="10dp"/>
 
         </LinearLayout>
 
         <TextView android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:text="@string/see_your_progress"
-            android:layout_marginBottom="20dp"
+            android:layout_marginBottom="5dp"
             android:layout_marginTop="20dp" />
 
-        <Button android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="@string/show_achievements"
-            android:layout_marginBottom="20dp"
-            android:id="@+id/show_achievements_button" />
+            <LinearLayout android:orientation="horizontal"
+                android:layout_width="match_parent"
+                android:layout_height="120dp"
+                android:gravity="center"
+                android:weightSum="100" >
 
-        <Button android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="@string/show_leaderboards"
-            android:id="@+id/show_leaderboards_button" />
+                <Button
+                    android:layout_width="wrap_content"
+                    android:layout_height="match_parent"
+                    android:textColor="@drawable/button_text_color"
+                    android:textSize="20sp"
+                    android:text="@string/show_achievements"
+                    android:id="@+id/show_achievements_button"
+                    android:layout_weight="45"
+                    android:gravity="center"
+                    android:background="@drawable/button_color" />
+
+                <Space
+                    android:layout_width="20dp"
+                    android:layout_height="match_parent" />
+
+                <Button
+                    android:layout_width="wrap_content"
+                    android:layout_height="match_parent"
+                    android:textColor="@drawable/button_text_color"
+                    android:textSize="20sp"
+                    android:text="@string/show_leaderboards"
+                    android:id="@+id/show_leaderboards_button"
+                    android:layout_weight="45"
+                    android:background="@drawable/button_color"
+                    android:gravity="center"/>
+                </LinearLayout>
     </LinearLayout>
 
     <LinearLayout android:id="@+id/sign_in_bar"
@@ -125,6 +151,10 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:text="@string/sign_out"
-            android:textSize="12sp" />
+            android:textSize="12sp"
+            android:background="@drawable/button_color"
+             android:textColor="@drawable/button_text_color"
+            android:gravity="center"
+            android:padding="5dp"/>
     </LinearLayout>
 </LinearLayout>

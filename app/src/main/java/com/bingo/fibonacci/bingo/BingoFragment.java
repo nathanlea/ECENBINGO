@@ -1,5 +1,6 @@
 package com.bingo.fibonacci.bingo;
 
+import android.graphics.Color;
 import android.support.v4.app.Fragment;
 import android.graphics.PorterDuff;
 import android.os.Bundle;
@@ -77,11 +78,9 @@ public class BingoFragment extends Fragment implements AdapterView.OnItemClickLi
             ((ImageView) view).clearColorFilter();
             table[position] = false;
         } else {
-            ((ImageView) view).setColorFilter(0xffa40000, PorterDuff.Mode.OVERLAY);
+            ((ImageView) view).setColorFilter(Color.parseColor("#ffff6600"), PorterDuff.Mode.OVERLAY);
             table[position] = true;
             if (isBingo() && first_bingo) {
-                //Toast.makeText(BingoFragment.this, "BINGO!", Toast.LENGTH_SHORT).show();
-                //TODO What happens when there is a bingo
                 mListener.onBingo();
                 first_bingo = false;
             }

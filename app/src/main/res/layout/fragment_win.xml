@@ -29,9 +29,18 @@
         android:gravity="center"
         android:padding="20dp">
 
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:textAppearance="?android:attr/textAppearanceLarge"
+            android:text="BINGO"
+            android:textSize="60sp"
+            android:id="@+id/textView" />
+
         <TextView android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:text="@string/you_win"
+            android:textSize="30sp"
             android:layout_marginBottom="40dp" />
 
         <TextView android:layout_width="wrap_content"
@@ -42,14 +51,25 @@
 
         <TextView android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:layout_marginBottom="40dp"
+            android:layout_marginBottom="25dp"
             android:id="@+id/scoreblurb" />
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Check the leaderboards to see what place you got"
+            android:id="@+id/textView2"
+            android:textSize="12sp" />
 
         <Button android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:text="@string/ok"
             android:id="@+id/win_ok_button"
-            android:layout_marginTop="20dp" />
+            android:layout_marginTop="20dp"
+            android:background="@drawable/button_color"
+            android:textColor="@drawable/button_text_color"
+            android:padding="5dp"/>
+
     </LinearLayout>
 
     <LinearLayout android:id="@+id/win_screen_sign_in_bar"

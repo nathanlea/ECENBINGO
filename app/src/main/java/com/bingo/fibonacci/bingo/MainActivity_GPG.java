@@ -35,11 +35,9 @@ import com.google.example.games.basegameutils.BaseGameUtils;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
-import java.io.InputStream;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.util.Calendar;
-import java.util.Date;
 
 /**
  * Our main activity for the game.
@@ -206,22 +204,24 @@ public class MainActivity_GPG extends FragmentActivity
         long start = startTime.getTimeInMillis();
         long end = calendar.getTimeInMillis();
 
-        //TODO CHECK FOR CHEATING...
-        bingoData.increaseBingoCount();
-        bingoData.increaseTimePlayed(end-start);
-        bingoData.addBingo(end);
+        if( ((end-start)/1000) <= 4000 && ((end-start)/1000) > 200) {
+            bingoData.increaseBingoCount();
+            bingoData.increaseTimePlayed(end-start);
+            bingoData.addBingo(end);
 
-        switchToFragment(mWinFragment);
+            mWinFragment.setFinalTime(end - start);
 
-        // check for achievements
-        checkForAchievements(bingoData.getTime(), bingoData.getNumBingo());
+            // check for achievements
+            checkForAchievements(bingoData.getTime(), bingoData.getNumBingo());
 
-        // update leaderboards
-        updateLeaderboards( (end-start)/1000,  bingoData.bingoThisWeek(), bingoData.bingoThisMonth(), bingoData.bingoThisSemester() );
+            // update leaderboards
+            updateLeaderboards( (end-start)/1000,  bingoData.bingoThisWeek(), bingoData.bingoThisMonth(), bingoData.bingoThisSemester() );
 
-        // push those accomplishments to the cloud, if signed in
-        pushAccomplishments();
-        pushLeaderboard();
+
+            // push those accomplishments to the cloud, if signed in
+            pushAccomplishments();
+            pushLeaderboard();
+        }
 
         switchToFragment(mWinFragment);
     }
@@ -243,7 +243,7 @@ public class MainActivity_GPG extends FragmentActivity
         // Compute final score (in easy mode, it's the requested score; in hard mode, it's half)
         int finalScore = mNewGame ? requestedScore / 2 : requestedScore;
 
-        mWinFragment.setFinalScore(finalScore);
+        mWinFragment.setFinalTime(finalScore);
         mWinFragment.setExplanation(mNewGame ? getString(R.string.hard_mode_explanation) :
                 getString(R.string.easy_mode_explanation));
 
@@ -380,15 +380,6 @@ public class MainActivity_GPG extends FragmentActivity
      *
      * The score the user got.
      */
-    /*void updateLeaderboards(int finalScore) {
-        //TODO NHL
-        if (mNewGame && mOutbox.mHardModeScore < finalScore) {
-            mOutbox.mHardModeScore = finalScore;
-        } else if (!mNewGame && mOutbox.mEasyModeScore < finalScore) {
-            mOutbox.mEasyModeScore = finalScore;
-        }
-    }*/
-
     void updateLeaderboards(long bingoTime, int bingoWeek, int bingoMonth, int bingoSemester) {
         //TODO NHL
         if (mOutbox.bingoTime < bingoTime) {
@@ -447,9 +438,10 @@ public class MainActivity_GPG extends FragmentActivity
 
         // if we have accomplishments to push, push them
         if (!mOutbox.isEmpty()) {
-            pushAccomplishments();
-            Toast.makeText(this, getString(R.string.your_progress_will_be_uploaded),
-                    Toast.LENGTH_LONG).show();
+            //pushAccomplishments();
+          //TODO WHAT SHOULD I DO HERE?
+          //  Toast.makeText(this, getString(R.string.your_progress_will_be_uploaded),
+          //          Toast.LENGTH_LONG).show();
         }
     }
 
@@ -550,9 +542,9 @@ public class MainActivity_GPG extends FragmentActivity
 
     public void writeObjectOut( ) {
         try {
-            fos = getApplicationContext().openFileOutput("bingodata", Context.MODE_PRIVATE);
+            fos = getApplicationContext().openFileOutput("gamedata", Context.MODE_PRIVATE);
             os = new ObjectOutputStream(fos);
-            os.writeObject(this);
+            os.writeObject(bingoData);
 
         } catch (IOException e) {
             e.printStackTrace();
@@ -567,11 +559,9 @@ public class MainActivity_GPG extends FragmentActivity
     public void readObjectIn( ) {
 
         try {
-            fis = (getApplicationContext()).openFileInput("bingodata");
+            fis = (getApplicationContext()).openFileInput("gamedata");
             is = new ObjectInputStream(fis);
             bingoData = (BingoData) is.readObject();
-            is.close();
-            fis.close();
         } catch (IOException e) {
             e.printStackTrace();
             bingoData = new BingoData();  //TODO This is not the best way to handle this but for now it works
