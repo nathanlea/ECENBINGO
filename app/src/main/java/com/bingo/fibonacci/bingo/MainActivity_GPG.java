@@ -38,6 +38,8 @@ import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.util.Calendar;
+import java.util.Locale;
+import java.util.TimeZone;
 
 /**
  * Our main activity for the game.
@@ -55,15 +57,13 @@ import java.util.Calendar;
  * @author Bruno Oliveira
  */
 public class MainActivity_GPG extends FragmentActivity
-        implements MainMenuFragment.Listener,
-        GameplayFragment.Listener, WinFragment.Listener,
+        implements MainMenuFragment.Listener, WinFragment.Listener,
         GoogleApiClient.ConnectionCallbacks, GoogleApiClient.OnConnectionFailedListener, BingoFragment.Listener {
 
     BingoData bingoData;
 
     // Fragments
     MainMenuFragment mMainMenuFragment;
-    GameplayFragment mGameplayFragment;
     BingoFragment mBingoFragment;
     WinFragment mWinFragment;
 
@@ -116,13 +116,11 @@ public class MainActivity_GPG extends FragmentActivity
 
         // create fragments
         mMainMenuFragment = new MainMenuFragment();
-        mGameplayFragment = new GameplayFragment();
         mBingoFragment = new BingoFragment();
         mWinFragment = new WinFragment();
 
         // listen to fragment events
         mMainMenuFragment.setListener(this);
-        mGameplayFragment.setListener(this);
         mBingoFragment.setListener(this);
         mWinFragment.setListener(this);
 
@@ -142,10 +140,12 @@ public class MainActivity_GPG extends FragmentActivity
         readObjectIn(); //Read in the object Data
 
         startTime = Calendar.getInstance();
-        startTime.set(Calendar.HOUR, 8);
-        startTime.set(Calendar.MINUTE, 30);
+        long a = startTime.getTimeInMillis();
+        startTime.set(Calendar.ZONE_OFFSET, -21600000);
+        startTime.set(Calendar.HOUR, 7);
+        startTime.set(Calendar.MINUTE, 00);
         startTime.set(Calendar.SECOND, 0);
-    }
+}
 
     // Switch UI to the given fragment
     void switchToFragment(Fragment newFrag) {
@@ -215,7 +215,7 @@ public class MainActivity_GPG extends FragmentActivity
             checkForAchievements(bingoData.getTime(), bingoData.getNumBingo());
 
             // update leaderboards
-            updateLeaderboards( (end-start)/1000,  bingoData.bingoThisWeek(), bingoData.bingoThisMonth(), bingoData.bingoThisSemester() );
+            updateLeaderboards( (end-start),  bingoData.bingoThisWeek(), bingoData.bingoThisMonth(), bingoData.bingoThisSemester() );
 
 
             // push those accomplishments to the cloud, if signed in
@@ -237,42 +237,6 @@ public class MainActivity_GPG extends FragmentActivity
         switchToFragment(mBingoFragment);
     }
 
-    @Override
-    public void onEnteredScore(int requestedScore) {
-        //TODO NHL
-        // Compute final score (in easy mode, it's the requested score; in hard mode, it's half)
-        int finalScore = mNewGame ? requestedScore / 2 : requestedScore;
-
-        mWinFragment.setFinalTime(finalScore);
-        mWinFragment.setExplanation(mNewGame ? getString(R.string.hard_mode_explanation) :
-                getString(R.string.easy_mode_explanation));
-
-        // check for achievements
-        checkForAchievements(requestedScore, finalScore);
-
-        // update leaderboards
-       // updateLeaderboards(finalScore);
-
-        // push those accomplishments to the cloud, if signed in
-        pushAccomplishments();
-
-        // switch to the exciting "you won" screen
-        switchToFragment(mWinFragment);
-    }
-
-    // Checks if n is prime. We don't consider 0 and 1 to be prime.
-    // This is not an implementation we are mathematically proud of, but it gets the job done.
-    boolean isPrime(int n) {
-        int i;
-        if (n == 0 || n == 1) return false;
-        for (i = 2; i <= n / 2; i++) {
-            if (n % i == 0) {
-                return false;
-            }
-        }
-        return true;
-    }
-
     /**
      * Check for achievements and unlock the appropriate ones.
      *
@@ -282,9 +246,11 @@ public class MainActivity_GPG extends FragmentActivity
     void checkForAchievements(long playedTime, long numberOfBingo) {
         // Check if each condition is met; if so, unlock the corresponding
         // achievement.
+        long a = numberOfBingo;
+        long b = playedTime;
 
         //TODO NHL
-        if (numberOfBingo==1) {
+        if (numberOfBingo == 1) {
             mOutbox.mFirstBingoAchievement = true;
             achievementToast(getString(R.string.first_bingo));
             unlockAchievement(R.string.achievement_1Bingo, "1st Bingo");
@@ -382,7 +348,7 @@ public class MainActivity_GPG extends FragmentActivity
      */
     void updateLeaderboards(long bingoTime, int bingoWeek, int bingoMonth, int bingoSemester) {
         //TODO NHL
-        if (mOutbox.bingoTime < bingoTime) {
+        if (mOutbox.bingoTime > bingoTime) {
             mOutbox.bingoTime = bingoTime;
         }
         if (mOutbox.bingoThisWeek < bingoWeek) {
@@ -510,7 +476,7 @@ public class MainActivity_GPG extends FragmentActivity
         boolean m10hoursofBingoAchievement = false;
         boolean m100hoursofBingoAchievement = false;
         int mBoredSteps = 0;
-        long bingoTime = 99999999999L;
+        long bingoTime = Long.MAX_VALUE;
         int bingoThisWeek = 0;
         int bingoThisMonth = 0;
         int bingoThisSemester = 0;
@@ -518,7 +484,7 @@ public class MainActivity_GPG extends FragmentActivity
         boolean isEmpty() {
             return !mFirstBingoAchievement && !m10BingoAchievement && !m100BingoAchievement &&
                     !m10hoursofBingoAchievement && !m100hoursofBingoAchievement && mBoredSteps == 0
-                    && bingoTime < 99999999999L && bingoThisWeek < 0 && bingoThisMonth < 0 && bingoThisSemester < 0;
+                    && bingoTime < 99999999 && bingoThisWeek < 0 && bingoThisMonth < 0 && bingoThisSemester < 0;
         }
 
         public void saveLocal(Context ctx) {

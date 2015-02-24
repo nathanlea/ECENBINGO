@@ -26,6 +26,7 @@ import android.widget.TextView;
 
 import java.text.SimpleDateFormat;
 import java.util.Calendar;
+import java.util.Locale;
 
 /**
  * Fragment that shows the 'You won' message. Apart from congratulating the user
@@ -36,7 +37,6 @@ import java.util.Calendar;
  *
  */
 public class WinFragment extends Fragment implements OnClickListener {
-    String mExplanation = "";
     long mTime = 0;
     boolean mShowSignIn = false;
 
@@ -60,10 +60,6 @@ public class WinFragment extends Fragment implements OnClickListener {
         mTime = i;
     }
 
-    public void setExplanation(String s) {
-        mExplanation = s;
-    }
-
     public void setListener(Listener l) {
         mListener = l;
     }
@@ -77,10 +73,8 @@ public class WinFragment extends Fragment implements OnClickListener {
     void updateUi() {
         if (getActivity() == null) return;
         TextView scoreTv = (TextView) getActivity().findViewById(R.id.score_display);
-        TextView explainTv = (TextView) getActivity().findViewById(R.id.scoreblurb);
 
         if (scoreTv != null) scoreTv.setText(getDate(mTime, "mm:ss.SSS"));
-        if (explainTv != null) explainTv.setText(mExplanation);
 
         getActivity().findViewById(R.id.win_screen_sign_in_bar).setVisibility(
                 mShowSignIn ? View.VISIBLE : View.GONE);
@@ -102,7 +96,7 @@ public class WinFragment extends Fragment implements OnClickListener {
     }
 
     private String getDate(long milliSeconds, String dateFormat) {
-        SimpleDateFormat formatter = new SimpleDateFormat(dateFormat);
+        SimpleDateFormat formatter = new SimpleDateFormat(dateFormat, Locale.US);
 
         // Create a calendar object that will convert the date and time value in milliseconds to date.
         Calendar calendar = Calendar.getInstance();
