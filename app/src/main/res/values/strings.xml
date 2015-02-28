@@ -52,5 +52,8 @@
     <string name="hundred_bingo">Century bingo club</string>
     <string name="ten_hours_bingo">10 hours playing bingo</string>
     <string name="hundred_hour_bingo">WOW, just WOW, a hundred hours...</string>
+    <string name="Suggestions">"Suggest new spaces"</string>
+    <string name="send">Send</string>
+    <string name="cancel">Cancel</string>
 
 </resources>

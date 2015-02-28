@@ -15,12 +15,16 @@
 
 package com.bingo.fibonacci.bingo;
 
+import android.app.AlertDialog;
+import android.content.DialogInterface;
+import android.content.Intent;
 import android.os.Bundle;
 import android.support.v4.app.Fragment;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.View.OnClickListener;
 import android.view.ViewGroup;
+import android.widget.EditText;
 import android.widget.TextView;
 
 /**
@@ -31,8 +35,9 @@ import android.widget.TextView;
  * @author Bruno Oliveira (Google)
  *
  */
-public class MainMenuFragment extends Fragment implements OnClickListener {
+public class MainMenuFragment extends Fragment implements OnClickListener, View.OnLongClickListener {
     String mGreeting = "Hello, anonymous user (not signed in)";
+
 
     public interface Listener {
         public void onStartGameRequested(boolean newgame);
@@ -57,6 +62,7 @@ public class MainMenuFragment extends Fragment implements OnClickListener {
         for (int i : CLICKABLES) {
             v.findViewById(i).setOnClickListener(this);
         }
+        v.findViewById( R.id.title_bar).setOnLongClickListener(this);
         return v;
     }
 
@@ -79,7 +85,6 @@ public class MainMenuFragment extends Fragment implements OnClickListener {
         if (getActivity() == null) return;
         TextView tv = (TextView) getActivity().findViewById(R.id.hello);
         if (tv != null) tv.setText(mGreeting);
-
         getActivity().findViewById(R.id.sign_in_bar).setVisibility(mShowSignIn ?
                 View.VISIBLE : View.GONE);
         getActivity().findViewById(R.id.sign_out_bar).setVisibility(mShowSignIn ?
@@ -106,6 +111,43 @@ public class MainMenuFragment extends Fragment implements OnClickListener {
             break;
         }
     }
+
+    @Override
+    public boolean onLongClick(View v) {
+
+        switch (v.getId()) {
+            case R.id.title_bar:
+                final AlertDialog.Builder builder = new AlertDialog.Builder(getActivity());
+                // Get the layout inflater
+                final LayoutInflater inflater = getActivity().getLayoutInflater();
+
+                // Inflate and set the layout for the dialog
+                // Pass null as the parent view because its going in the dialog layout
+                builder.setView(inflater.inflate(R.layout.suggest_dialog, null))
+                        // Add action buttons
+                        .setPositiveButton(R.string.send, new DialogInterface.OnClickListener() {
+                            @Override
+                            public void onClick(DialogInterface dialog, int id) {
+                                final EditText suggestion = (EditText) ((AlertDialog)dialog).findViewById(R.id.suggestion);
+                                Intent sendIntent = new Intent(android.content.Intent.ACTION_SEND);
+                                sendIntent.setType("message/rfc822");
+                                sendIntent.putExtra(android.content.Intent.EXTRA_EMAIL,new String[] { "fibonacci.studios@gmail.com"});
+                                sendIntent.putExtra(android.content.Intent.EXTRA_SUBJECT, "Suggestion for ECEN BINGO");
+                                sendIntent.putExtra(Intent.EXTRA_TEXT, suggestion.getText());
+                                startActivity(Intent.createChooser(sendIntent, "Send your suggestion with:"));
+                            }
+                        })
+                        .setNegativeButton(R.string.cancel, new DialogInterface.OnClickListener() {
+                            public void onClick(DialogInterface dialog, int id) {
+                                dialog.cancel();
+                            }
+                        });
+                builder.create().show();
+                return true;
+        }
+        return false;
+    }
+
 
     public void setShowSignInButton(boolean showSignIn) {
         mShowSignIn = showSignIn;

@@ -19,6 +19,7 @@ package com.bingo.fibonacci.bingo;
 
 import android.content.Context;
 import android.content.Intent;
+import android.content.pm.ActivityInfo;
 import android.os.Bundle;
 import android.support.v4.app.Fragment;
 import android.support.v4.app.FragmentActivity;
@@ -38,9 +39,6 @@ import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.util.Calendar;
-import java.util.Locale;
-import java.util.TimeZone;
-
 /**
  * Our main activity for the game.
  *
@@ -106,6 +104,8 @@ public class MainActivity_GPG extends FragmentActivity
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main_gpg);
 
+        setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_PORTRAIT);
+
         // Create the Google API Client with access to Plus and Games
         mGoogleApiClient = new GoogleApiClient.Builder(this)
                 .addConnectionCallbacks(this)
@@ -142,9 +142,10 @@ public class MainActivity_GPG extends FragmentActivity
         startTime = Calendar.getInstance();
         long a = startTime.getTimeInMillis();
         startTime.set(Calendar.ZONE_OFFSET, -21600000);
-        startTime.set(Calendar.HOUR, 7);
-        startTime.set(Calendar.MINUTE, 00);
+        startTime.set(Calendar.HOUR, 8);
+        startTime.set(Calendar.MINUTE, 30);
         startTime.set(Calendar.SECOND, 0);
+        startTime.set(Calendar.AM_PM, 0);
 }
 
     // Switch UI to the given fragment
@@ -249,7 +250,6 @@ public class MainActivity_GPG extends FragmentActivity
         long a = numberOfBingo;
         long b = playedTime;
 
-        //TODO NHL
         if (numberOfBingo == 1) {
             mOutbox.mFirstBingoAchievement = true;
             achievementToast(getString(R.string.first_bingo));
